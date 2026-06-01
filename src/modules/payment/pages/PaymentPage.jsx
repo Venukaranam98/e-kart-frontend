@@ -182,7 +182,7 @@ export default function PaymentPage() {
           fontWeight: "600",
         }}
       >
-        Pay Now
+        pay Now
       </button>
     </div>
   );

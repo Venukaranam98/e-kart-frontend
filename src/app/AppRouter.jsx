@@ -33,7 +33,7 @@ export default function AppRouter() {
 
       <Route path="/payment" element={<PaymentPage />} />
 
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="* " element={<NotFoundPage />} />
     </Routes>
   );
 }

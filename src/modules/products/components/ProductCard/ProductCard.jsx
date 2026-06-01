@@ -6,10 +6,20 @@ import { useNavigate } from "react-router-dom";
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
 
-  const { id, title, price, description, category, image } = product;
+  const {
+    id,
+    title,
+    price,
+    description,
+    category,
+    image,
+  } = product;
 
-  const { mutate: addToCart, isPending } = useAddToCartMutation();
-  const { data: cartItems = [] } = useCartQuery();
+  const { mutate: addToCart, isPending } =
+    useAddToCartMutation();
+
+  const { data: cartItems = [] } =
+    useCartQuery();
 
   const isAdded = cartItems.some(
     (item) => item.product_title === title
@@ -28,6 +38,10 @@ export default function ProductCard({ product }) {
     navigate(`/products/${id}`);
   };
 
+  const imageUrl = image?.startsWith("http")
+    ? image
+    : `${import.meta.env.VITE_API_URL}${image}`;
+console.log(product);
   return (
     <S.Card>
       <S.ImageWrapper
@@ -35,9 +49,16 @@ export default function ProductCard({ product }) {
         style={{ cursor: "pointer" }}
       >
         {image ? (
-          <img src={image} alt={title} />
+          <img
+            src={imageUrl}
+            alt={title}
+          />
         ) : (
-          <span style={{ color: "var(--color-mute)" }}>
+          <span
+            style={{
+              color: "var(--color-mute)",
+            }}
+          >
             No Image
           </span>
         )}
@@ -53,7 +74,9 @@ export default function ProductCard({ product }) {
           {title}
         </S.Title>
 
-        <S.Description>{description}</S.Description>
+        <S.Description>
+          {description}
+        </S.Description>
 
         <S.Footer>
           <S.Price>
@@ -66,7 +89,8 @@ export default function ProductCard({ product }) {
             style={
               isAdded
                 ? {
-                    backgroundColor: "var(--color-success)",
+                    backgroundColor:
+                      "var(--color-success)",
                     cursor: "default",
                   }
                 : {}

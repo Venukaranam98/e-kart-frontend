@@ -7,17 +7,21 @@ export default function PaymentPage() {
   );
 
   const handlePayment = async () => {
+    if (!address) {
+      alert("Please select a delivery address");
+      window.location.href = "/address";
+      return;
+    }
+
     try {
       const token = localStorage.getItem("access_token");
-
-      alert("BUTTON CLICKED");
-
-      console.log("TOKEN:", token);
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/create-payment-order`,
         {
-          amount: 1,
+          amount: Number(
+            localStorage.getItem("cart_total")
+          ),
         },
         {
           headers: {
@@ -26,37 +30,17 @@ export default function PaymentPage() {
         }
       );
 
-      console.log(
-        "CREATE PAYMENT RESPONSE:",
-        response.data
-      );
-
       const order = response.data;
-
-      console.log(
-        "RAZORPAY KEY:",
-        import.meta.env.VITE_RAZORPAY_KEY_ID
-      );
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-
         amount: order.amount,
-
         currency: order.currency,
-
         name: "Ekart Hub",
-
         description: "Order Payment",
-
         order_id: order.id,
 
         handler: async function (paymentResponse) {
-          console.log(
-            "PAYMENT RESPONSE:",
-            paymentResponse
-          );
-
           try {
             await axios.post(
               `${import.meta.env.VITE_API_URL}/verify-payment`,
@@ -65,10 +49,8 @@ export default function PaymentPage() {
                 params: {
                   razorpay_order_id:
                     paymentResponse.razorpay_order_id,
-
                   razorpay_payment_id:
                     paymentResponse.razorpay_payment_id,
-
                   razorpay_signature:
                     paymentResponse.razorpay_signature,
                 },
@@ -86,23 +68,10 @@ export default function PaymentPage() {
             );
 
             alert("Order Placed Successfully");
-
             window.location.href = "/orders";
-          } catch (error) {
-            console.error(
-              "VERIFY PAYMENT ERROR:",
-              error
-            );
+          } catch {
             alert("Payment Verification Failed");
           }
-        },
-
-        modal: {
-          ondismiss: function () {
-            console.log(
-              "RAZORPAY POPUP CLOSED"
-            );
-          },
         },
 
         theme: {
@@ -111,13 +80,8 @@ export default function PaymentPage() {
       };
 
       const razor = new window.Razorpay(options);
-
       razor.open();
-    } catch (error) {
-      console.error(
-        "CREATE PAYMENT ERROR:",
-        error
-      );
+    } catch {
       alert("Payment Failed");
     }
   };
@@ -152,15 +116,11 @@ export default function PaymentPage() {
             <p>
               <b>{address.full_name}</b>
             </p>
-
             <p>{address.phone}</p>
-
             <p>{address.address_line}</p>
-
             <p>
               {address.city}, {address.state}
             </p>
-
             <p>{address.pincode}</p>
           </>
         ) : (
@@ -182,7 +142,7 @@ export default function PaymentPage() {
           fontWeight: "600",
         }}
       >
-        pay Now
+        Pay Now
       </button>
     </div>
   );

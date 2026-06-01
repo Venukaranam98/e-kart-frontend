@@ -59,6 +59,10 @@ export default function ProductDetailsPage() {
     return <h2>Product Not Found</h2>;
   }
 
+  const imageUrl = product.image?.startsWith("http")
+    ? product.image
+    : `${import.meta.env.VITE_API_URL}${product.image}`;
+
   return (
     <div
       style={{
@@ -69,7 +73,7 @@ export default function ProductDetailsPage() {
       }}
     >
       <img
-        src={product.image}
+        src={imageUrl}
         alt={product.title}
         style={{
           width: "350px",

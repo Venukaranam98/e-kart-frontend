@@ -17,7 +17,7 @@ export default function ProductsPage() {
     prevPage,
     isPlaceholderData,
     searchQuery,
-  } = useProducts(8);
+  } = useProducts(100);
 
   return (
     <S.PageWrapper>

@@ -1,0 +1,86 @@
+const BASE_URL = import.meta.env.VITE_API_URL || "https://e-kart-backend-qyf8.onrender.com";
+
+export const apiClient = async (endpoint, options = {}) => {
+  const url = `${BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  
+  const token = localStorage.getItem("access_token");
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
+  const config = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  };
+
+  if (config.body && typeof config.body === 'object' && config.headers['Content-Type'] === 'application/json') {
+    config.body = JSON.stringify(config.body);
+  }
+  console.log("TOKEN:", token);
+  console.log("HEADERS:", config.headers);
+  try {
+    const response = await fetch(url, config);
+    
+    let result;
+    try {
+      result = await response.json();
+    } catch (e) {
+      if (!response.ok) {
+        const error = new Error(response.statusText || 'An unexpected error occurred');
+        error.code = `HTTP_ERROR_${response.status}`;
+        error.status = response.status;
+        throw error;
+      }
+      return null;
+    }
+
+    const isError = !response.ok || result.success === false || result.detail?.success === false;
+
+    if (isError) {
+      let errorMessage = 'An unexpected error occurred';
+      let errorCode = 'API_ERROR';
+      let errors = null;
+
+      // Handle FastAPI's detail structure
+      if (result.detail) {
+        if (typeof result.detail === 'string') {
+          errorMessage = result.detail;
+        } else if (Array.isArray(result.detail)) {
+          errorMessage = 'Validation Error';
+          errorCode = 'VALIDATION_ERROR';
+          errors = result.detail;
+        } else if (typeof result.detail === 'object') {
+          errorMessage = result.detail.message || errorMessage;
+          errorCode = result.detail.errorCode || errorCode;
+        }
+      } else {
+        errorMessage = result.message || errorMessage;
+        errorCode = result.errorCode || errorCode;
+        errors = result.errors || null;
+      }
+      
+      const error = new Error(errorMessage);
+      error.code = errorCode;
+      error.status = response.status;
+      if (errors) {
+        error.errors = errors;
+      }
+      throw error;
+    }
+
+    return result; 
+  } catch (error) {
+    if (!error.code) {
+      error.code = 'NETWORK_ERROR';
+    }
+    console.error(`[API Error] [${endpoint}]:`, error.message);
+    throw error;
+  }
+};

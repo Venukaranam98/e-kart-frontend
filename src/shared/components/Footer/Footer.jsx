@@ -1,24 +1,46 @@
-import { Link } from "react-router-dom";
 import * as S from "./Footer.styles";
 
 export default function Footer() {
-  const year = new Date().getFullYear();
-
   return (
-    <S.FooterContainer>
-      <div className="container">
-        <S.FooterContent>
-          <S.Copyright>
-            &copy; {year} Ekart Hub. All rights reserved.
-          </S.Copyright>
-          
-          <S.Links>
-            <Link to="/about">About Us</Link>
-            <Link to="/terms">Terms of Service</Link>
-            <Link to="/privacy">Privacy Policy</Link>
-          </S.Links>
-        </S.FooterContent>
-      </div>
-    </S.FooterContainer>
+    <S.Footer>
+      <S.Container>
+        <S.Section>
+          <h3>Ekart Hub</h3>
+          <p>
+            Your destination for premium electronics,
+            gadgets, and computing devices.
+          </p>
+        </S.Section>
+
+        <S.Section>
+          <h4>Categories</h4>
+          <ul>
+            <li>Mobiles</li>
+            <li>Laptops</li>
+            <li>Accessories</li>
+            <li>Appliances</li>
+          </ul>
+        </S.Section>
+
+        <S.Section>
+          <h4>Quick Links</h4>
+          <ul>
+            <li>Home</li>
+            <li>Products</li>
+            <li>Cart</li>
+            <li>Orders</li>
+          </ul>
+        </S.Section>
+
+        <S.Section>
+          <h4>Contact</h4>
+          <p>Email: support@ekarthub.com</p>
+        </S.Section>
+      </S.Container>
+
+      <S.Bottom>
+        © 2026 Ekart Hub. All Rights Reserved.
+      </S.Bottom>
+    </S.Footer>
   );
 }

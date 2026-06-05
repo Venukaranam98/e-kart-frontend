@@ -4,6 +4,7 @@ import Header from "../shared/components/Header";
 import CartDrawer from "../shared/components/CartDrawer";
 import { Global } from "@emotion/react";
 import { globalCss } from "./GlobalStyles.styles";
+import Footer from "../shared/components/Footer/Footer";
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Global styles={globalCss} />
       <Header />
       <AppRouter />
+      <Footer />
       <CartDrawer />
     </Providers>
   );

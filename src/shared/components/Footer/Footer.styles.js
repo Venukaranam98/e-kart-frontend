@@ -1,50 +1,44 @@
 import styled from "@emotion/styled";
 
-export const FooterContainer = styled.footer`
-  background-color: #08080c;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 40px 0;
-  margin-top: auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  position: relative;
-  z-index: 10;
+export const Footer = styled.footer`
+  background: #111827;
+  color: white;
+  margin-top: 60px;
 `;
 
-export const FooterContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+export const Container = styled.div`
+  max-width: 1200px;
+  margin: auto;
+  padding: 50px 20px;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+  gap: 30px;
+`;
+
+export const Section = styled.div`
+  h3,
+  h4 {
+    margin-bottom: 15px;
+  }
+
+  p,
+  li {
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    list-style: none;
+  }
+
+  ul {
+    padding: 0;
+  }
+`;
+
+export const Bottom = styled.div`
   text-align: center;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-`;
-
-export const Copyright = styled.p`
-  font-size: 13px;
-  margin: 0;
-`;
-
-export const Links = styled.div`
-  display: flex;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-md);
-
-  @media (min-width: 768px) {
-    margin-top: 0;
-  }
-
-  a {
-    color: rgba(255, 255, 255, 0.4);
-    text-decoration: none;
-    font-size: 13px;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: var(--color-primary);
-    }
-  }
+  padding: 20px;
+  border-top: 1px solid #374151;
+  color: #94a3b8;
 `;

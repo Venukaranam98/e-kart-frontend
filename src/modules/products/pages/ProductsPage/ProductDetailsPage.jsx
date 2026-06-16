@@ -16,28 +16,45 @@ export default function ProductDetailsPage() {
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-useEffect(() => {
-  const fetchProduct = async () => {
-    try {
-      const response = await apiClient(
-        `/products/${id}`
-      );
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await apiClient(
+          `/products/${id}`
+        );
 
-      setProduct(response.data);
-    } catch (error) {
+        setProduct(response.data);
+      } catch (error) {
+        console.error(
+          "Failed to fetch product:",
+          error
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+
+    apiClient(
+      `/products/${product.id}/view`,
+      {
+        method: "POST",
+      }
+    ).catch((error) => {
       console.error(
-        "Failed to fetch product:",
+        "Failed to track product view:",
         error
       );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    });
+  }, [product?.id]);
 
-  if (id) {
-    fetchProduct();
-  }
-}, [id]);
 
   const addToCartMutation = useAddToCartMutation();
 

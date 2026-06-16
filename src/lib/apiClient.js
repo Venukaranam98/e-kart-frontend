@@ -1,6 +1,7 @@
 const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://e-kart-backend-qyf8.onrender.com";
+console.log("BASE_URL:", BASE_URL);
 
 export const apiClient = async (
   endpoint,

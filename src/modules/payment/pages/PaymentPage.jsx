@@ -31,7 +31,6 @@ export default function PaymentPage() {
       );
 
       const order = response.data;
-
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,

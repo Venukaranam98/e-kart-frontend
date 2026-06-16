@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { useProducts } from "../../hooks/ui/useProducts";
+import { useEffect, useState } from "react";
+import apiClient from "../../../shared/api/apiClient";
 import axios from "axios";
 import * as S from "./ProductDetailsPage.styles";
 import {
@@ -12,13 +13,35 @@ import { useAddToCartMutation } from "../../../cart/hooks/api/useCartMutations";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { products, isLoading } = useProducts(100);
+useEffect(() => {
+  const fetchProduct = async () => {
+    try {
+      const response = await apiClient(
+        `/products/${id}`
+      );
+
+      setProduct(response.data);
+    } catch (error) {
+      console.error(
+        "Failed to fetch product:",
+        error
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (id) {
+    fetchProduct();
+  }
+}, [id]);
+
   const addToCartMutation = useAddToCartMutation();
 
-  const product = products?.find(
-    (item) => item.id === Number(id)
-  );
+
     const handleAddToCart = () => {
       addToCartMutation.mutate({
         productId: product.id,
@@ -27,12 +50,12 @@ export default function ProductDetailsPage() {
     };
   const handlePayment = async () => {
     try {
-      const response = await axios.post(
-         "http://127.0.0.1:8000/create-payment-order",
-        {
-          amount: product.price,
-        }
-      );
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/create-order`,
+      {
+        amount: product.price,
+      }
+    );
       console.log("ORDER:", response.data);
 
       const order = response.data;

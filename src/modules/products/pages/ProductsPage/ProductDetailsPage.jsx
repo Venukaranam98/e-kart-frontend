@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import apiClient from "../../../shared/api/apiClient";
+import { apiClient } from "../../../../lib/apiClient";
 import axios from "axios";
 import * as S from "./ProductDetailsPage.styles";
 import {

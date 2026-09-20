@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useProductsQuery } from "./api/useProductsQuery";
 
@@ -11,13 +11,18 @@ export const useProducts = (initialLimit = 10) => {
   const searchQuery = searchParams.get("q") || "";
   const categoryFilter = searchParams.get("category") || "";
 
+  useEffect(() => {
+    setPage(1);
+  }, [categoryFilter, searchQuery]);
+
   const {
     data,
     isLoading,
     isError,
     error,
     isPlaceholderData,
-  } = useProductsQuery(page, limit);
+  } = useProductsQuery(page, limit, categoryFilter);
+
 
   const products = useMemo(() => data?.data || [], [data?.data]);
 

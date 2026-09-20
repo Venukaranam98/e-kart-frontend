@@ -128,9 +128,9 @@ export default function PaymentPage() {
     0
   );
 
-  const clearCartStateAndCache = async () => {
+  const clearCartStateAndCache = async (skipBackendClear = false) => {
     const token = localStorage.getItem("access_token");
-    if (token) {
+    if (token && !skipBackendClear) {
       try {
         await axios.delete(`${API_BASE_URL}/cart/clear`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -206,7 +206,7 @@ export default function PaymentPage() {
               );
 
               savePlacedOrderToLocalStorage(verifyRes, summaryItems, subtotal, "online");
-              await clearCartStateAndCache();
+              await clearCartStateAndCache(true);
               toast.success("Payment Successful! Order Placed.");
               navigate("/orders");
             } catch (vErr) {
@@ -262,7 +262,7 @@ export default function PaymentPage() {
         }
       );
       savePlacedOrderToLocalStorage(checkoutRes, summaryItems, subtotal, "cod");
-      await clearCartStateAndCache();
+      await clearCartStateAndCache(true);
       toast.success("Order Placed Successfully!");
       navigate("/orders");
     } catch (err) {

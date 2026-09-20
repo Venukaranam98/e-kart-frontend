@@ -66,23 +66,7 @@ export default function TrackOrderPage() {
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      let productsMap = {};
-      try {
-        const prodRes = await axios.get(`${API_BASE_URL}/products?limit=100`);
-        const prodList = prodRes.data?.data || (Array.isArray(prodRes.data) ? prodRes.data : []);
-        prodList.forEach((p) => {
-          if (p.id) productsMap[String(p.id)] = p;
-          if (p.title) productsMap[p.title.toUpperCase()] = p;
-        });
-      } catch (e) {
-        console.warn("Products sync notice:", e);
-      }
-
       const getLatestProdImage = (prodId, prodTitle, defaultImg) => {
-        const keyId = prodId ? String(prodId) : "";
-        const keyTitle = prodTitle ? String(prodTitle).toUpperCase() : "";
-        const liveProd = productsMap[keyId] || productsMap[keyTitle];
-        if (liveProd?.image) return getImageUrl(liveProd.image);
         if (defaultImg) return getImageUrl(defaultImg);
         return "https://res.cloudinary.com/dwdvdags5/image/upload/v1780316665/ekart/thgozxpt6vxonsdaz8ba.webp";
       };

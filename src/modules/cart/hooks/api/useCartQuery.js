@@ -8,6 +8,6 @@ export const useCartQuery = () => {
     queryKey: CART_QUERY_KEY,
     queryFn: getCart,
     select: (response) => response?.data || [],
-    staleTime: 0,
+    staleTime: 1000 * 60 * 5,
   });
 };

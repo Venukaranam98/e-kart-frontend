@@ -15,7 +15,7 @@ export default function ProductsPage() {
     nextPage,
     prevPage,
     searchQuery,
-  } = useProducts(100);
+  } = useProducts(12);
 
   return (
     <S.PageWrapper>

@@ -4,10 +4,13 @@ import { getCart } from "../../api/cart.api";
 export const CART_QUERY_KEY = ["cart"];
 
 export const useCartQuery = () => {
+  const hasToken = !!localStorage.getItem("access_token");
   return useQuery({
     queryKey: CART_QUERY_KEY,
     queryFn: getCart,
     select: (response) => response?.data || [],
     staleTime: 1000 * 60 * 5,
+    enabled: hasToken,
   });
 };
+

@@ -11,12 +11,11 @@ import {
   Lock,
 } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import * as S from "../styles/PaymentPage.styles";
 import { useCartQuery } from "../../cart/hooks/api/useCartQuery";
 import { CART_QUERY_KEY } from "../../cart/hooks/api/useCartQuery";
-import { API_BASE_URL } from "../../../lib/apiClient";
+import { apiClient } from "../../../lib/apiClient";
 
 const DEFAULT_ADDRESS = {
   full_name: "Venu",
@@ -58,6 +57,10 @@ const savePlacedOrderToLocalStorage = (checkoutRes, summaryItems, subtotal, sele
   localStorage.setItem("last_placed_order", JSON.stringify(newOrder));
 };
 
+const generateCheckoutIdempotencyKey = () => {
+  return `checkout_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+};
+
 export default function PaymentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -86,13 +89,10 @@ export default function PaymentPage() {
     if (!token) return;
 
     let isMounted = true;
-    axios
-      .get(`${API_BASE_URL}/address`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    apiClient("/address")
       .then((res) => {
         if (!isMounted) return;
-        const list = Array.isArray(res.data) ? res.data : res.data ? [res.data] : [];
+        const list = Array.isArray(res) ? res : res?.data ? (Array.isArray(res.data) ? res.data : [res.data]) : [];
         if (list.length > 0) {
           setAddress(list[0]);
           localStorage.setItem("selected_address", JSON.stringify(list[0]));
@@ -129,12 +129,9 @@ export default function PaymentPage() {
   );
 
   const clearCartStateAndCache = async (skipBackendClear = false) => {
-    const token = localStorage.getItem("access_token");
-    if (token && !skipBackendClear) {
+    if (!skipBackendClear) {
       try {
-        await axios.delete(`${API_BASE_URL}/cart/clear`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await apiClient("/cart/clear", { method: "DELETE" });
       } catch (e) {
         console.warn("Cart clear API call error:", e);
       }
@@ -155,7 +152,7 @@ export default function PaymentPage() {
       return;
     }
 
-    const idempotencyKey = `checkout_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const idempotencyKey = generateCheckoutIdempotencyKey();
 
     // Online Razorpay Payment
     if (selectedMethod === "online") {
@@ -166,18 +163,14 @@ export default function PaymentPage() {
       }
 
       try {
-        const response = await axios.post(
-          `${API_BASE_URL}/create-payment-order`,
-          { amount: subtotal },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Idempotency-Key": idempotencyKey,
-            },
-          }
-        );
+        const orderData = await apiClient("/create-payment-order", {
+          method: "POST",
+          body: { amount: subtotal },
+          headers: {
+            "Idempotency-Key": idempotencyKey,
+          },
+        });
 
-        const orderData = response.data;
         const razorpayOrderId = orderData.razorpay_order_id || orderData.id;
         const razorpayKeyId = orderData.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID;
 
@@ -190,20 +183,17 @@ export default function PaymentPage() {
           order_id: razorpayOrderId,
           handler: async function (paymentResponse) {
             try {
-              const verifyRes = await axios.post(
-                `${API_BASE_URL}/verify-payment`,
-                {
+              const verifyRes = await apiClient("/verify-payment", {
+                method: "POST",
+                body: {
                   razorpay_order_id: paymentResponse.razorpay_order_id,
                   razorpay_payment_id: paymentResponse.razorpay_payment_id,
                   razorpay_signature: paymentResponse.razorpay_signature,
                 },
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Idempotency-Key": `verify_${paymentResponse.razorpay_order_id}`,
-                  },
-                }
-              );
+                headers: {
+                  "Idempotency-Key": `verify_${paymentResponse.razorpay_order_id}`,
+                },
+              });
 
               savePlacedOrderToLocalStorage(verifyRes, summaryItems, subtotal, "online");
               await clearCartStateAndCache(true);
@@ -212,8 +202,7 @@ export default function PaymentPage() {
             } catch (vErr) {
               console.error("[Razorpay Verification Error]:", vErr);
               const errorMessage =
-                vErr.response?.data?.detail?.message ||
-                vErr.response?.data?.message ||
+                vErr.message ||
                 "Payment verification failed. Order was not placed.";
               toast.error(errorMessage);
             } finally {
@@ -240,8 +229,7 @@ export default function PaymentPage() {
       } catch (err) {
         console.error("[Razorpay Initialization Error]:", err);
         const errMsg =
-          err.response?.data?.detail?.message ||
-          err.response?.data?.message ||
+          err.message ||
           "Failed to initialize Razorpay payment. Please try again.";
         toast.error(errMsg);
         setIsProcessing(false);
@@ -251,16 +239,12 @@ export default function PaymentPage() {
 
     // Cash on Delivery (COD) Flow
     try {
-      const checkoutRes = await axios.post(
-        `${API_BASE_URL}/checkout`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Idempotency-Key": idempotencyKey,
-          },
-        }
-      );
+      const checkoutRes = await apiClient("/checkout", {
+        method: "POST",
+        headers: {
+          "Idempotency-Key": idempotencyKey,
+        },
+      });
       savePlacedOrderToLocalStorage(checkoutRes, summaryItems, subtotal, "cod");
       await clearCartStateAndCache(true);
       toast.success("Order Placed Successfully!");
@@ -268,8 +252,7 @@ export default function PaymentPage() {
     } catch (err) {
       console.error("[COD Checkout Error]:", err);
       const errMsg =
-        err.response?.data?.detail?.message ||
-        err.response?.data?.message ||
+        err.message ||
         "Failed to place order. Please try again.";
       toast.error(errMsg);
     } finally {

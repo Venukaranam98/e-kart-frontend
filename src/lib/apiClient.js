@@ -100,6 +100,9 @@ export const apiClient = async (
     if (isError) {
       if (response.status === 401) {
         localStorage.removeItem("access_token");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        }
       }
 
       let errorMessage =

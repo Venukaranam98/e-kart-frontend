@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import NotFoundPage from "./pages/NotFoundPage";
@@ -7,7 +8,6 @@ import LoginPage from "../modules/auth/pages/LoginPage";
 import RegisterPage from "../modules/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../modules/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "../modules/auth/pages/ResetPasswordPage";
-
 
 import ProductsPage from "../modules/products/pages/ProductsPage";
 import ProductDetailsPage from "../modules/products/pages/ProductsPage/ProductDetailsPage";
@@ -19,53 +19,146 @@ import AddressPage from "../modules/address/pages/AddressPage";
 import PaymentPage from "../modules/payment/pages/PaymentPage";
 import WishlistPage from "../modules/wishlist/pages/WishlistPage";
 
-export default function AppRouter() {
-  const token = localStorage.getItem("access_token");
+import ProtectedRoute from "../shared/components/ProtectedRoute";
+import PublicRoute from "../shared/components/PublicRoute";
+import { useCartStore } from "../modules/cart/store/useCartStore";
 
+// Helper component for direct /cart navigation
+function CartRouteRedirect() {
+  const openDrawer = useCartStore((state) => state.openDrawer);
+
+  useEffect(() => {
+    openDrawer();
+  }, [openDrawer]);
+
+  return <Navigate to="/products" replace />;
+}
+
+export default function AppRouter() {
   return (
     <Routes>
+      {/* Default Root: Publicly accessible catalog */}
+      <Route path="/" element={<Navigate to="/products" replace />} />
+
+      {/* Public Pages */}
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/products" element={<ProductsPage />} />
+      <Route path="/products/:id" element={<ProductDetailsPage />} />
+
+      {/* Auth Public Pages (redirect if already logged in) */}
       <Route
-        path="/"
+        path="/login"
         element={
-          token ? (
-            <Navigate to="/products" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPasswordPage />
+          </PublicRoute>
         }
       />
 
-      <Route path="/home" element={<HomePage />} />
-
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-
-      <Route path="/products" element={<ProductsPage />} />
-
+      {/* Protected Routes: Authentication strictly required */}
       <Route
-        path="/products/:id"
-        element={<ProductDetailsPage />}
+        path="/orders"
+        element={
+          <ProtectedRoute>
+            <OrdersPage />
+          </ProtectedRoute>
+        }
       />
-
-      <Route path="/orders" element={<OrdersPage />} />
-      <Route path="/orders/:id" element={<TrackOrderPage />} />
-      <Route path="/orders/:id/track" element={<TrackOrderPage />} />
-      <Route path="/track-order/:id" element={<TrackOrderPage />} />
-
-      <Route path="/address" element={<AddressPage />} />
-
-      <Route path="/payment" element={<PaymentPage />} />
-
-      <Route path="*" element={<NotFoundPage />} />
+      <Route
+        path="/orders/:id"
+        element={
+          <ProtectedRoute>
+            <TrackOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/:id/track"
+        element={
+          <ProtectedRoute>
+            <TrackOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/track-order/:id"
+        element={
+          <ProtectedRoute>
+            <TrackOrderPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/wishlist"
-        element={<WishlistPage />}
+        element={
+          <ProtectedRoute>
+            <WishlistPage />
+          </ProtectedRoute>
+        }
       />
 
+      <Route
+        path="/cart"
+        element={
+          <ProtectedRoute>
+            <CartRouteRedirect />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/address"
+        element={
+          <ProtectedRoute>
+            <AddressPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/payment"
+        element={
+          <ProtectedRoute>
+            <PaymentPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 404 Catch-All */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

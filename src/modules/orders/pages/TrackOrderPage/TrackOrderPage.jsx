@@ -12,11 +12,10 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
 import * as S from "../../styles/TrackOrderPage.styles";
 import StatusBadge from "../../components/StatusBadge";
 import { calculateLiveTrackingTimeline, getLiveISTOrders } from "../../../../shared/utils/dateUtils";
-import { API_BASE_URL, getImageUrl } from "../../../../lib/apiClient";
+import { apiClient, getImageUrl } from "../../../../lib/apiClient";
 
 export default function TrackOrderPage() {
   const { id } = useParams();
@@ -71,21 +70,12 @@ export default function TrackOrderPage() {
         return "https://res.cloudinary.com/dwdvdags5/image/upload/v1780316665/ekart/thgozxpt6vxonsdaz8ba.webp";
       };
 
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        setOrderData((prev) => ({
-          ...prev,
-          image: getLatestProdImage(prev.product_id, prev.product_title, prev.image),
-        }));
-        return;
-      }
       try {
-        const response = await axios.get(`${API_BASE_URL}/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const data = await apiClient("/orders");
+        const orderList = Array.isArray(data) ? data : data?.data || [];
 
-        if (Array.isArray(response.data)) {
-          const match = response.data.find(
+        if (Array.isArray(orderList)) {
+          const match = orderList.find(
             (o) => String(o.order_id || o.id) === String(orderId)
           );
           if (match) {
@@ -111,10 +101,6 @@ export default function TrackOrderPage() {
         }
       } catch (err) {
         console.error("Error fetching order detail:", err);
-        setOrderData((prev) => ({
-          ...prev,
-          image: getLatestProdImage(prev.product_id, prev.product_title, prev.image),
-        }));
       }
     };
 

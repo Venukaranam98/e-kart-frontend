@@ -6,6 +6,7 @@ import SearchBar from "../../../modules/products/components/SearchBar";
 import { useCartStore } from "../../../modules/cart/store/useCartStore";
 import { useCartQuery } from "../../../modules/cart/hooks/api/useCartQuery";
 import { useWishlistQuery } from "../../../modules/wishlist/api/useWishlistQuery";
+import { useAuthStore } from "../../../modules/auth/store/useAuthStore";
 import * as S from "./Header.styles";
 
 export default function Header() {
@@ -14,18 +15,17 @@ export default function Header() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const toggleDrawer = useCartStore((state) => state.toggleDrawer);
+  const { isAuthenticated, logout } = useAuthStore();
   const { data: cartItems = [] } = useCartQuery();
   const { data: wishlistItems = [] } = useWishlistQuery();
   const cartItemsCount = cartItems.length;
   const wishlistCount = wishlistItems.length;
 
-  const isAuthenticated = !!localStorage.getItem("access_token");
-
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   const handleLogout = (e) => {
     e.preventDefault();
-    localStorage.removeItem("access_token");
+    logout();
     queryClient.clear();
     closeMenu();
     navigate("/login");

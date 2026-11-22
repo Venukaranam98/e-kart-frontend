@@ -1,22 +1,22 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, Shield, Truck, BadgeCheck, Headphones } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
 import * as S from "../../styles/OrdersPage.styles";
 import OrderCard from "../../components/OrderCard";
 
-import { getLiveISTOrders, formatISTDateString } from "../../../../shared/utils/dateUtils";
-import { API_BASE_URL, getImageUrl } from "../../../../lib/apiClient";
+import { formatISTDateString } from "../../../../shared/utils/dateUtils";
+import { apiClient, getImageUrl } from "../../../../lib/apiClient";
 
 export default function OrdersPage() {
   const [activeFilter, setActiveFilter] = useState("ALL ORDERS");
   const [sortBy, setSortBy] = useState("NEWEST");
   const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchOrders = async () => {
-      const token = localStorage.getItem("access_token");
       const lastPlacedRaw = localStorage.getItem("last_placed_order");
       let lastPlaced = null;
       if (lastPlacedRaw) {
@@ -32,30 +32,15 @@ export default function OrdersPage() {
         return "https://res.cloudinary.com/dwdvdags5/image/upload/v1780317112/ekart/cd29pm8b7nslyespb6wi.webp";
       };
 
-      if (!token) {
-        const defaultsWithLiveImages = getLiveISTOrders().map((def) => ({
-          ...def,
-          image: getLatestProdImage(def.product_id, def.product_title, def.image),
-        }));
-        if (lastPlaced) {
-          lastPlaced.image = getLatestProdImage(lastPlaced.product_id, lastPlaced.product_title, lastPlaced.image);
-          setOrders([lastPlaced, ...defaultsWithLiveImages]);
-        } else {
-          setOrders(defaultsWithLiveImages);
-        }
-        return;
-      }
-
       try {
         setIsLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const data = await apiClient("/orders");
+        const orderList = Array.isArray(data) ? data : data?.data || [];
 
-        if (Array.isArray(response.data)) {
-          const formatted = response.data.map((item) => {
+        if (Array.isArray(orderList) && isMounted) {
+          const formatted = orderList.map((item) => {
             const firstProduct = item.products?.[0] || {};
-            const title = firstProduct.product_title || "ONEPLUS NORD 2";
+            const title = firstProduct.product_title || "Product";
             const orderDateObj = item.created_at ? new Date(item.created_at) : new Date();
             const deliveryDateObj = new Date(orderDateObj.getTime() + 3 * 24 * 60 * 60 * 1000);
 
@@ -85,18 +70,22 @@ export default function OrdersPage() {
             }
           }
           setOrders(allList);
-        } else {
+        } else if (isMounted) {
           setOrders([]);
         }
       } catch (err) {
         console.error("Error fetching orders:", err);
-        setOrders([]);
+        if (isMounted) setOrders([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filters = ["ALL ORDERS", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];

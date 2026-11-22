@@ -11,3 +11,9 @@ export const getOrders = async () => {
     method: "GET",
   });
 };
+
+export const cancelOrder = async (orderId) => {
+  return await apiClient(`/orders/${orderId}/cancel`, {
+    method: "POST",
+  });
+};

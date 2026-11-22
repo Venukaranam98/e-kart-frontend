@@ -3,6 +3,9 @@ import { ChevronDown, Shield, Truck, BadgeCheck, Headphones } from "lucide-react
 import { toast } from "sonner";
 import * as S from "../../styles/OrdersPage.styles";
 import OrderCard from "../../components/OrderCard";
+import CancelOrderModal from "../../components/CancelOrderModal";
+import { cancelOrder } from "../../api/orders.api";
+import { queryClient } from "../../../../lib/reactQuery";
 
 import { formatISTDateString } from "../../../../shared/utils/dateUtils";
 import { apiClient, getImageUrl } from "../../../../lib/apiClient";
@@ -12,6 +15,8 @@ export default function OrdersPage() {
   const [sortBy, setSortBy] = useState("NEWEST");
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,7 +113,58 @@ export default function OrdersPage() {
     if (type === "buy_again") {
       toast.success(`Added ${order.product_title} back to cart!`);
     } else if (type === "cancel") {
-      toast.info(`Order #${order.id} cancellation requested.`);
+      setOrderToCancel(order);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!orderToCancel || isCancelling) return;
+
+    const targetOrderId = orderToCancel.id;
+    setIsCancelling(true);
+
+    try {
+      await cancelOrder(targetOrderId);
+
+      setOrders((prevOrders) =>
+        prevOrders.map((ord) => {
+          if (String(ord.id) === String(targetOrderId)) {
+            return {
+              ...ord,
+              status: "CANCELLED",
+              delivery_date: "Cancelled",
+            };
+          }
+          return ord;
+        })
+      );
+
+      const lastPlacedRaw = localStorage.getItem("last_placed_order");
+      if (lastPlacedRaw) {
+        try {
+          const lastPlaced = JSON.parse(lastPlacedRaw);
+          if (String(lastPlaced.id) === String(targetOrderId)) {
+            lastPlaced.status = "CANCELLED";
+            lastPlaced.delivery_date = "Cancelled";
+            localStorage.setItem("last_placed_order", JSON.stringify(lastPlaced));
+          }
+        } catch {
+          // ignore error
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Order cancelled successfully.");
+      setOrderToCancel(null);
+    } catch (err) {
+      console.error("Cancellation failed:", err);
+      const errorMessage =
+        err.message ||
+        err.detail?.message ||
+        "Failed to cancel order. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -159,6 +215,7 @@ export default function OrdersPage() {
                 key={`${order.id}-${idx}`}
                 order={order}
                 onActionClick={handleActionClick}
+                isCancelling={isCancelling && String(orderToCancel?.id) === String(order.id)}
               />
             ))
           )}
@@ -207,6 +264,14 @@ export default function OrdersPage() {
           </S.FeatureCard>
         </S.FeatureSection>
       </S.Container>
+
+      <CancelOrderModal
+        isOpen={Boolean(orderToCancel)}
+        onClose={() => !isCancelling && setOrderToCancel(null)}
+        onConfirm={handleConfirmCancel}
+        orderId={orderToCancel?.id}
+        isCancelling={isCancelling}
+      />
     </S.PageWrapper>
   );
 }

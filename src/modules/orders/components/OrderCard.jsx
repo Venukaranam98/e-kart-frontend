@@ -4,7 +4,7 @@ import StatusBadge from "./StatusBadge";
 import * as S from "../styles/OrdersPage.styles";
 import { getImageUrl } from "../../../lib/apiClient";
 
-export default function OrderCard({ order, onActionClick }) {
+export default function OrderCard({ order, onActionClick, isCancelling = false }) {
   const navigate = useNavigate();
 
   const handleViewDetails = () => {
@@ -29,11 +29,15 @@ export default function OrderCard({ order, onActionClick }) {
         </S.OrderActionBtn>
       );
     }
-    if (status === "PROCESSING") {
+    if (["PROCESSING", "NEW", "NEW ORDER", "PENDING"].includes(status)) {
       return (
-        <S.OrderActionBtn onClick={() => onActionClick?.(order, "cancel")}>
+        <S.OrderActionBtn
+          onClick={() => onActionClick?.(order, "cancel")}
+          disabled={isCancelling}
+          style={isCancelling ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+        >
           <XCircle size={16} />
-          CANCEL ORDER
+          {isCancelling ? "CANCELLING..." : "CANCEL ORDER"}
         </S.OrderActionBtn>
       );
     }
